@@ -144,7 +144,7 @@ function render(){
   $('extras').innerHTML=extrasHTML();
   $('saintBtn').onclick=openSaint;
   document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>openLiturgy(b.dataset.start));
-  document.querySelectorAll('[data-chip]').forEach(b=>b.onclick=()=>{const[z,t]=b.dataset.chip.split(':');S.pro[z]=t;save();render();});
+  document.querySelectorAll('[data-chip]').forEach(b=>b.onclick=()=>{const t=b.dataset.chip.split(':')[1];S.std=t;S.pro={};save();render();});
   document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const z=b.dataset.pick;const l=Object.keys(TRADITIONEN);S.pro[z]=l[(l.indexOf(tradOf(z))+1)%l.length];save();render();});
 }
 function cardHTML(z,main){
