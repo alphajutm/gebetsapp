@@ -232,12 +232,42 @@ async function openSaint(){
     document.querySelectorAll('#saintList button').forEach(b=>b.onclick=()=>saintInfo(b.dataset.n));
   }catch(e){$('saintList').textContent='Konnte nicht geladen werden. Bitte Internetverbindung prüfen.';}
 }
+// Geschichte des Heiligen: Lebenskapitel des Wikipedia-Artikels (CC BY-SA 4.0), mit Quellenangabe und Literaturhinweisen des Artikels
+const LEBEN=/^(Leben|Biografie|Biographie|Vita|Lebensgeschichte|Legende|Geschichte|Leben und Wirken|Wirken|Werdegang|Martyrium|Hagiographische)/i;
+function abschnitte(txt){
+  const teile=txt.split(/\n(?==+ [^\n]+ =+\n)/);const out={};let intro=teile.shift().trim();
+  teile.forEach(t=>{const m=t.match(/^(=+) ([^\n]+) =+\n([\s\S]*)$/);if(m)out[m[2].trim()]=(out[m[2].trim()]||'')+(m[1].length>2?'\n\n'+m[2].trim()+'\n':'')+m[3];});
+  return {intro,out};
+}
+function kuerzeAbsatz(txt,max){
+  if(txt.length<=max)return txt;
+  const paras=txt.split(/\n{1,2}/);let r='';
+  for(const p of paras){if((r+p).length>max&&r)break;r+=(r?'\n\n':'')+p;}
+  return r;
+}
 async function saintInfo(name){
   $('saintInfo').textContent='Lade …';
   try{
-    const j=await wiki('action=query&generator=search&gsrlimit=1&prop=extracts&exintro=1&explaintext=1&gsrsearch='+encodeURIComponent(name+' Heiliger'));
+    const first=name.split(/[ ,]/)[0].toLowerCase();
+    const sr=await wiki('action=query&list=search&srlimit=5&srsearch='+encodeURIComponent(name+' Heiliger'));
+    const hits=sr.query.search.map(x=>x.title);
+    const title=hits.find(t=>t.toLowerCase().includes(first))||hits[0];
+    if(!title)throw new Error('kein Treffer');
+    const j=await wiki('action=query&prop=extracts&explaintext=1&titles='+encodeURIComponent(title));
     const p=Object.values(j.query.pages)[0];
-    $('saintInfo').innerHTML=`<b>${p.title}</b><br>${p.extract.split('\n').slice(0,3).join('<br><br>')}<br><br><a href="https://de.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g,'_'))}" target="_blank" rel="noopener">Weiterlesen auf Wikipedia</a>`;
+    const {intro,out}=abschnitte(p.extract);
+    const keys=Object.keys(out);
+    let story=keys.filter(k=>LEBEN.test(k)).map(k=>out[k].trim()).join('\n\n');
+    if(!story)story=keys.filter(k=>!/^(Literatur|Weblinks|Einzelnachweise|Siehe auch|Quellen|Anmerkungen)/i.test(k)).map(k=>out[k].trim()).join('\n\n');
+    const voll=story.replace(/\n=+ [^\n]+ =+\n/g,'\n');story=kuerzeAbsatz(voll,3500);const gekuerzt=story.length<voll.trim().length;
+    const lit=['Literatur','Lexikonartikel','Biografien','Quellen'].map(k=>out[k]||'').join('\n').split('\n').map(x=>x.trim()).filter(x=>x.length>25&&!/^=/.test(x)).slice(0,4);
+    const para=t=>t.split(/\n{1,2}/).filter(Boolean).map(x=>`<p>${esc(x)}</p>`).join('');
+    const link='https://de.wikipedia.org/wiki/'+encodeURIComponent(p.title.replace(/ /g,'_'));
+    $('saintInfo').innerHTML=`<b>${esc(p.title)}</b>${para(intro.split('\n').slice(0,2).join('\n'))}`
+      +(story?`<h3 style="font-weight:400;margin:18px 0 6px">Geschichte</h3>${para(story)}${gekuerzt?'<p class="note">… weiter im Artikel (Link unten).</p>':''}`:'')
+      +(lit.length?`<div class="note"><b>Weiterführende Literatur</b> (laut Artikel):<br>${lit.map(esc).join('<br>')}</div>`:'')
+      +`<div class="note">Quelle: <a href="${link}" target="_blank" rel="noopener">Wikipedia, „${esc(p.title)}“</a> (CC BY-SA 4.0). Für eine gesicherte Darstellung bitte die genannte Literatur oder das <a href="https://www.heiligenlexikon.de" target="_blank" rel="noopener">Ökumenische Heiligenlexikon</a> heranziehen.</div>`;
+    $('saintInfo').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){$('saintInfo').textContent='Keine Informationen gefunden.';}
 }
 $('saintClose').onclick=()=>$('saintBg').classList.remove('open');
