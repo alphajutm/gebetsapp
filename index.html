@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stundengebet</title>
+<meta name="description" content="Morgen-, Mittag-, Abend- und Nachtgebet in verschiedenen christlichen Traditionen">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gebet">
+<meta name="theme-color" content="#1b2540">
+<style>
+:root{
+  --bg:#f6efe2; --bg2:#ecdfc6; --ink:#2a2418; --muted:#7a6c52; --card:rgba(255,255,255,.55); --line:rgba(80,60,20,.15); --gold:#a9822f; --on-gold:#fff;
+  --font:"Iowan Old Style","Palatino","Georgia",serif; --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+}
+body[data-zeit=mittag]{--bg:#fbf6e6;--bg2:#f2e6bd;--gold:#b0861f}
+body[data-zeit=abend]{--bg:#3a2a3d;--bg2:#5b3a40;--ink:#f6ead8;--muted:#cdb59a;--card:rgba(255,255,255,.08);--line:rgba(255,230,200,.18);--gold:#e0b45c;--on-gold:#2a1e10}
+body[data-zeit=nacht]{--bg:#141b30;--bg2:#1f2a4a;--ink:#e8e4d6;--muted:#97a0b8;--card:rgba(255,255,255,.07);--line:rgba(200,210,255,.15);--gold:#d6b260;--on-gold:#1a1f33}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--font);color:var(--ink);background:linear-gradient(180deg,var(--bg),var(--bg2)) fixed;transition:background .6s,color .6s;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:560px;margin:0 auto;padding:22px 20px 40px}
+header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.date{font:13px var(--ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
+.icon-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
+.cross{color:var(--gold);font-size:20px;text-align:center;margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;backdrop-filter:blur(8px)}
+.card.main{padding:24px 20px;text-align:center}
+.card .label{font:12px var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card .time{font-size:44px;margin:6px 0 2px}
+.card .name{font-size:22px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:14px 0}
+.chip{font:13px var(--ui);padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.chip.on{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.start{font:600 16px var(--ui);background:var(--gold);color:var(--on-gold);border:0;border-radius:14px;padding:14px 28px;cursor:pointer;width:100%}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.row .t{font-size:18px}
+.row .s{font:13px var(--ui);color:var(--muted)}
+.small{font:600 14px var(--ui);background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:12px;padding:8px 14px;cursor:pointer}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10}
+.sheet-bg.open{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:var(--bg);color:var(--ink);border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));z-index:11;max-width:560px;margin:0 auto}
+.sheet h2{font-weight:400;margin:0 0 14px}
+.sheet label{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:17px}
+.sheet input[type=time],.sheet select{font:16px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
+.note{font:13px/1.45 var(--ui);color:var(--muted);margin:12px 0}
+.liturgy{position:fixed;inset:0;z-index:20;background:linear-gradient(180deg,var(--bg),var(--bg2));display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow:hidden}
+.liturgy.open{display:flex}
+.lh{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;font:13px var(--ui);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.dots{display:flex;gap:5px;justify-content:center;padding:0 20px}
+.dots i{height:3px;flex:1;border-radius:2px;background:var(--line)}
+.dots i.done{background:var(--gold)}
+.lb{flex:1;overflow:auto;padding:24px 26px;max-width:560px;width:100%;margin:0 auto}
+.lb h2{font-weight:400;font-size:26px;margin:0 0 18px;color:var(--gold)}
+.lb p{font-size:20px;line-height:1.6;margin:0 0 14px}
+.lf{display:flex;gap:10px;padding:14px 20px 18px;max-width:560px;width:100%;margin:0 auto}
+.lf button{flex:1}
+.ghost{font:600 16px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer}
+.verse{font-size:19px;line-height:1.55;font-style:italic;text-align:center}
+.verse small{display:block;font:13px var(--ui);font-style:normal;color:var(--muted);margin-top:8px}
+.saintlist button{display:block;width:100%;text-align:left;font:16px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
+.saintlist small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.saintinfo{font-size:17px;line-height:1.55;margin:10px 0}
+.saintinfo a{color:var(--gold)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="date" id="date"></div>
+      <h1 id="greet"></h1>
+    </div>
+    <button class="icon-btn" id="openSettings" aria-label="Einstellungen">⚙︎</button>
+  </header>
+  <div class="cross">☩</div>
+  <section id="current"></section>
+  <section id="others"></section>
+  <section id="extras"></section>
+</main>
+
+<div class="sheet-bg" id="sheetBg">
+  <div class="sheet" id="sheet" onclick="event.stopPropagation()">
+    <h2>Einstellungen</h2>
+    <div id="timeInputs"></div>
+    <label>Julianischer Kalender (Heilige, orthodox) <input type="checkbox" id="julian"></label>
+    <label>Standard-Tradition <select id="stdTrad"></select></label>
+    <p class="note">Pro Gebet kannst du die Tradition auf der Startseite einzeln wählen.</p>
+    <button class="start" id="icsBtn">Erinnerungen im Kalender speichern (.ics)</button>
+    <p class="note">Lädt eine Kalenderdatei mit täglichen Alarmen zu deinen Gebetszeiten. Auf dem iPhone öffnen und „Alle hinzufügen“ tippen. Nach einer Änderung der Zeiten erneut exportieren und die alten Einträge im Kalender löschen.</p>
+    <button class="ghost" style="width:100%" id="closeSettings">Fertig</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="saintBg">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <h2>Heiliger des Tages</h2>
+    <div class="note" id="saintDate"></div>
+    <div class="saintlist" id="saintList">Lade …</div>
+    <div class="saintinfo" id="saintInfo"></div>
+    <button class="ghost" style="width:100%" id="saintClose">Schliessen</button>
+  </div>
+</div>
+
+<div class="liturgy" id="liturgy">
+  <div class="lh"><span id="lTitle"></span><button class="icon-btn" id="lClose" aria-label="Schliessen">✕</button></div>
+  <div class="dots" id="dots"></div>
+  <div class="lb" id="lBody"></div>
+  <div class="lf"><button class="ghost" id="lPrev">Zurück</button><button class="start" id="lNext">Weiter</button></div>
+</div>
+
+<script src="texte.js"></script>
+<script>
+const KEY='gebetsapp-v1';
+const defaults={zeiten:Object.fromEntries(Object.entries(ZEITEN).map(([k,v])=>[k,v.def])),std:'griechisch',pro:{}};
+let S=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));
+S.zeiten=Object.assign({},defaults.zeiten,S.zeiten);S.pro=S.pro||{};if(!TRADITIONEN[S.std])S.std='griechisch';for(const k in S.pro)if(!TRADITIONEN[S.pro[k]])delete S.pro[k];
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const $=id=>document.getElementById(id);
+const tradOf=z=>S.pro[z]||S.std;
+const mins=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
+
+function currentZeit(){
+  const now=new Date();const n=now.getHours()*60+now.getMinutes();
+  const order=Object.keys(ZEITEN).sort((a,b)=>mins(S.zeiten[a])-mins(S.zeiten[b]));
+  let cur=order[order.length-1];
+  for(const z of order) if(mins(S.zeiten[z])<=n) cur=z;
+  return cur;
+}
+function render(){
+  const now=new Date();
+  $('date').textContent=now.toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'});
+  const cur=currentZeit();
+  document.body.dataset.zeit=cur;
+  $('greet').textContent={morgen:'Guten Morgen',mittag:'Gesegneten Mittag',abend:'Guten Abend',nacht:'Gute Nacht'}[cur];
+  $('current').innerHTML=cardHTML(cur,true);
+  $('others').innerHTML=Object.keys(ZEITEN).filter(z=>z!==cur).sort((a,b)=>mins(S.zeiten[a])-mins(S.zeiten[b])).map(z=>cardHTML(z,false)).join('');
+  $('extras').innerHTML=extrasHTML();
+  $('saintBtn').onclick=openSaint;
+  document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>openLiturgy(b.dataset.start));
+  document.querySelectorAll('[data-chip]').forEach(b=>b.onclick=()=>{const[z,t]=b.dataset.chip.split(':');S.pro[z]=t;save();render();});
+  document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const z=b.dataset.pick;const l=Object.keys(TRADITIONEN);S.pro[z]=l[(l.indexOf(tradOf(z))+1)%l.length];save();render();});
+}
+function cardHTML(z,main){
+  const t=tradOf(z);
+  if(main) return `<div class="card main"><div class="label">Jetzt${t==='orientalisch'?' · '+ritus()[0]:''}</div><div class="name">${ZEITEN[z].name}sgebet</div><div class="time">${S.zeiten[z]}</div>
+    <div class="chips">${Object.entries(TRADITIONEN).map(([k,v])=>`<button class="chip ${k===t?'on':''}" data-chip="${z}:${k}">${v}</button>`).join('')}</div>
+    <button class="start" data-start="${z}">Gebet beginnen</button></div>`;
+  return `<div class="card"><div class="row"><div><div class="t">${ZEITEN[z].name} · ${S.zeiten[z]}</div><button class="s" data-pick="${z}" style="background:none;border:0;padding:0;cursor:pointer;color:var(--muted)">${TRADITIONEN[t]} ⟳</button></div><button class="small" data-start="${z}">Beten</button></div></div>`;
+}
+
+function ritus(){return RITEN[RITUS_TAG[new Date().getDay()]];}
+function extrasHTML(){
+  const v=VERSE[(new Date().getDate()-1)%VERSE.length];
+  return `<div class="card"><div class="label">Vers des Tages</div><p class="verse">„${v[0]}“<small>${v[1]} · Lutherbibel 1912</small></p></div>
+  <button class="start" id="saintBtn">Heiliger des Tages</button>`;
+}
+
+// Heilige des Tages (Wikipedia, online)
+const FILTER={griechisch:/orthodox/i,orientalisch:/orthodox|koptisch|syrisch|armenisch|äthiopisch/i,katholisch:/katholisch/i,reformatorisch:/evangelisch/i};
+const MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+async function wiki(params){
+  const r=await fetch('https://de.wikipedia.org/w/api.php?format=json&origin=*&'+params);
+  return r.json();
+}
+async function openSaint(){
+  $('saintBg').classList.add('open');$('saintInfo').innerHTML='';$('saintList').textContent='Lade …';
+  const t=tradOf(currentZeit());
+  const d=new Date();
+  if(S.julian&&(t==='griechisch'||t==='orientalisch'))d.setDate(d.getDate()-13);
+  const title=`${d.getDate()}._${MONATE[d.getMonth()]}`;
+  $('saintDate').textContent=`${d.getDate()}. ${MONATE[d.getMonth()]} · ${TRADITIONEN[t]}${S.julian&&(t==='griechisch'||t==='orientalisch')?' (julianisch)':''}`;
+  try{
+    const j=await wiki('action=query&prop=extracts&explaintext=1&titles='+encodeURIComponent(title));
+    const txt=Object.values(j.query.pages)[0].extract;
+    const m=txt.match(/Kirchliche Gedenktage\n([\s\S]*?)(?:\nNamenstage|\nStaatliche|\n==)/);
+    if(!m)throw new Error('keine Daten');
+    let lines=m[1].split('\n').map(x=>x.trim()).filter(Boolean);
+    const f=lines.filter(x=>FILTER[t].test(x));
+    const note=f.length?'':'<div class="note">Für diese Tradition ist heute nichts verzeichnet, hier alle Einträge:</div>';
+    if(f.length)lines=f;
+    $('saintList').innerHTML=note+lines.map((x,i)=>{const nm=x.replace(/\s*\([^)]*\)\s*$/,'').split(',')[0];return `<button data-n="${nm.replace(/"/g,'')}">${nm}<small>${x.slice(nm.length).replace(/^,\s*/,'')}</small></button>`;}).join('');
+    document.querySelectorAll('#saintList button').forEach(b=>b.onclick=()=>saintInfo(b.dataset.n));
+  }catch(e){$('saintList').textContent='Konnte nicht geladen werden. Bitte Internetverbindung prüfen.';}
+}
+async function saintInfo(name){
+  $('saintInfo').textContent='Lade …';
+  try{
+    const j=await wiki('action=query&generator=search&gsrlimit=1&prop=extracts&exintro=1&explaintext=1&gsrsearch='+encodeURIComponent(name+' Heiliger'));
+    const p=Object.values(j.query.pages)[0];
+    $('saintInfo').innerHTML=`<b>${p.title}</b><br>${p.extract.split('\n').slice(0,3).join('<br><br>')}<br><br><a href="https://de.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g,'_'))}" target="_blank" rel="noopener">Weiterlesen auf Wikipedia</a>`;
+  }catch(e){$('saintInfo').textContent='Keine Informationen gefunden.';}
+}
+$('saintClose').onclick=()=>$('saintBg').classList.remove('open');
+$('saintBg').onclick=()=>$('saintBg').classList.remove('open');
+
+// Liturgie
+let L={z:null,steps:[],i:0};
+function openLiturgy(z){
+  L.z=z;L.steps=TEXTE[tradOf(z)][z].slice();L.i=0;
+  if(tradOf(z)==='orientalisch'){const r=ritus();L.steps.unshift([r[0],r[1]+'\n\nHeute wird nach dem Wochentag dieser Ritus hervorgehoben. Die folgenden Gebete sind eine gemeinsame Kurzform.']);}
+  $('lTitle').textContent=`${ZEITEN[z].name} · ${TRADITIONEN[tradOf(z)]}`;
+  document.body.dataset.zeit=z;
+  $('liturgy').classList.add('open');showStep();
+}
+function showStep(){
+  const s=L.steps[L.i];
+  $('lBody').innerHTML=`<h2>${s[0]}</h2>`+s[1].split('\n\n').map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  $('lBody').scrollTop=0;
+  $('dots').innerHTML=L.steps.map((_,k)=>`<i class="${k<=L.i?'done':''}"></i>`).join('');
+  $('lPrev').style.visibility=L.i?'visible':'hidden';
+  $('lNext').textContent=L.i===L.steps.length-1?'Amen':'Weiter';
+}
+$('lNext').onclick=()=>{if(L.i<L.steps.length-1){L.i++;showStep();}else closeLiturgy();};
+$('lPrev').onclick=()=>{if(L.i){L.i--;showStep();}};
+$('lClose').onclick=closeLiturgy;
+function closeLiturgy(){$('liturgy').classList.remove('open');render();}
+
+// Einstellungen
+function openSettings(){
+  $('timeInputs').innerHTML=Object.entries(ZEITEN).map(([k,v])=>`<label>${v.name}<input type="time" data-time="${k}" value="${S.zeiten[k]}"></label>`).join('');
+  document.querySelectorAll('[data-time]').forEach(i=>i.onchange=()=>{if(i.value){S.zeiten[i.dataset.time]=i.value;save();render();}});
+  $('stdTrad').innerHTML=Object.entries(TRADITIONEN).map(([k,v])=>`<option value="${k}" ${k===S.std?'selected':''}>${v}</option>`).join('');
+  $('julian').checked=!!S.julian;
+  $('sheetBg').classList.add('open');
+}
+$('julian').onchange=e=>{S.julian=e.target.checked;save();};
+$('openSettings').onclick=openSettings;
+$('stdTrad').onchange=e=>{S.std=e.target.value;save();render();};
+$('closeSettings').onclick=()=>$('sheetBg').classList.remove('open');
+$('sheetBg').onclick=()=>$('sheetBg').classList.remove('open');
+
+// Kalender-Export
+$('icsBtn').onclick=()=>{
+  const url=location.href.split('#')[0].split('?')[0];
+  const d=new Date();const ymd=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const ev=Object.entries(ZEITEN).map(([k,v])=>{
+    const t=S.zeiten[k].replace(':','')+'00';
+    return ['BEGIN:VEVENT',`UID:gebet-${k}@gebetsapp`,`DTSTAMP:${stamp}`,`DTSTART:${ymd}T${t}`,'DURATION:PT15M','RRULE:FREQ=DAILY',`SUMMARY:${v.name}sgebet`,`URL:${url}`,`DESCRIPTION:Zeit für das ${v.name}sgebet. ${url}`,'BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${v.name}sgebet`,'TRIGGER:PT0S','END:VALARM','END:VEVENT'].join('\r\n');
+  });
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gebetsapp//DE','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='Gebetszeiten.ics';
+  document.body.appendChild(a);a.click();a.remove();
+};
+
+render();
+setInterval(()=>{if(!$('liturgy').classList.contains('open'))render();},60000);
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
