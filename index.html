@@ -146,6 +146,7 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 <script src="geschichten2.js"></script>
 <script src="geschichten3.js"></script>
 <script src="geschichten4.js"></script>
+<script src="geschichten_vorab.js"></script>
 <script>
 const KEY='gebetsapp-v1';
 const defaults={zeiten:Object.fromEntries(Object.entries(ZEITEN).map(([k,v])=>[k,v.def])),std:'griechisch',pro:{}};
@@ -223,13 +224,19 @@ async function wiki(params){
 const TRAD_KURZ={katholisch:'k',reformatorisch:'r',griechisch:'g',orientalisch:'o'};
 const ostkirche=t=>t==='griechisch'||t==='orientalisch';
 function saintDate(t){const d=new Date();if(S.julian&&ostkirche(t))d.setDate(d.getDate()-13);return d;}
+// Spätere Dateien überschreiben frühere Fassungen desselben Heiligen am selben Tag
+const GESCH=Object.values(Object.fromEntries(GESCHICHTEN.map(g=>[g.d+'|'+g.n,g])));
 function geschichtenFuer(t,d){
   const tag=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  return GESCHICHTEN.filter(g=>g.t.includes(TRAD_KURZ[t])&&(ostkirche(t)?g.dO:g.d)===tag);
+  const amTag=g=>(ostkirche(t)?g.dO:g.d)===tag;
+  const eigene=GESCH.filter(g=>g.t.includes(TRAD_KURZ[t])&&amTag(g));
+  // Gibt es für die eigene Tradition nichts, kommt eine Geschichte vom Tag aus einer anderen Tradition
+  return eigene.length?eigene:GESCH.filter(g=>amTag(g)).map(g=>Object.assign({fremd:true},g));
 }
 function showStory(g){
   const abs=g.text.split('\n\n').map(p=>`<p class="saintinfo">${esc(p)}</p>`).join('');
-  $('saintStory').innerHTML=`<h3 style="font-weight:400;font-size:22px;margin:16px 0 2px">${esc(g.n)}</h3><div class="note" style="margin-top:0">${esc(g.titel)}</div>${abs}`
+  const fremd=g.fremd?`<div class="note">Dieser Tag ist in deiner Tradition nicht eigens besetzt. Die Geschichte stammt aus: ${g.t.split('').map(c=>({k:'katholisch',r:'reformatorisch',g:'orthodox',o:'altorientalisch'}[c])).join(', ')}.</div>`:'';
+  $('saintStory').innerHTML=fremd+`<h3 style="font-weight:400;font-size:22px;margin:16px 0 2px">${esc(g.n)}</h3><div class="note" style="margin-top:0">${esc(g.titel)}</div>${abs}`
     +`<div class="note"><b>Zum Nachdenken:</b> ${esc(g.frage)}</div>`
     +`<div class="note">Frei erzählt nach: ${esc(g.q)}. Legenden sind im Text als solche genannt. Für genaue Angaben bitte die Quellen oder das Ökumenische Heiligenlexikon heranziehen.</div>`;
 }
