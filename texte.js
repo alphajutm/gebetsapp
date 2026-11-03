@@ -30,6 +30,8 @@ const P = {
   credo: "Ich glaube an den einen Gott, den Vater, den Allherrscher,\nSchöpfer des Himmels und der Erde, alles Sichtbaren und Unsichtbaren.\nUnd an den einen Herrn Jesus Christus, den eingeborenen Sohn Gottes,\nvor aller Zeit aus dem Vater geboren,\nLicht vom Licht, wahrer Gott vom wahren Gott,\ngezeugt, nicht geschaffen, eines Wesens mit dem Vater,\ndurch den alles geworden ist.\nFür uns Menschen und um unseres Heiles willen ist er vom Himmel gekommen,\nhat Fleisch angenommen durch den Heiligen Geist aus der Jungfrau Maria\nund ist Mensch geworden.\nEr wurde für uns gekreuzigt unter Pontius Pilatus, hat gelitten und ist begraben worden\nund ist am dritten Tage auferstanden nach der Schrift\nund aufgefahren in den Himmel und sitzt zur Rechten des Vaters.\nUnd er wird wiederkommen in Herrlichkeit, zu richten die Lebenden und die Toten;\nseines Reiches wird kein Ende sein.\nUnd an den Heiligen Geist, den Herrn und Lebensspender,\nder aus dem Vater hervorgeht, der mit dem Vater und dem Sohn angebetet und verherrlicht wird,\nder durch die Propheten gesprochen hat.\nUnd an die eine, heilige, katholische und apostolische Kirche.\nIch bekenne die eine Taufe zur Vergebung der Sünden.\nIch erwarte die Auferstehung der Toten und das Leben der kommenden Welt. Amen.",
   kyrie41: "Kyrie eleison. – Herr, erbarme dich.\n\n(Ruhig wiederholen, 41× in der koptischen Tradition; hier so oft, wie es dir gut tut.)",
   danksagung: "Wir danken dir, gütiger und menschenliebender Gott, Vater unseres Herrn, Gottes und Erlösers Jesus Christus,\ndass du uns an diesem Tag behütet hast und uns herangeführt hast zu dieser Stunde.\nVergib uns unsere Sünden und nimm unser Gebet an wie Weihrauch vor dir.\nDenn du bist gesegnet mit deinem eingeborenen Sohn und dem Heiligen Geist, jetzt und alle Zeit und in Ewigkeit. Amen.",
+  luthCredo: "Ich glaube an Gott den Vater, den Allmächtigen, Schöpfer Himmels und der Erde.\n\nUnd an Jesum Christum, Gottes eingebornen Sohn, unsern Herrn, der empfangen ist vom Heiligen Geist, geboren von der Jungfrau Maria, gelitten unter Pontio Pilato, gekreuziget, gestorben und begraben, niedergefahren zur Hölle, am dritten Tage auferstanden von den Toten, aufgefahren gen Himmel, sitzend zur Rechten Gottes, des allmächtigen Vaters, von dannen er kommen wird, zu richten die Lebendigen und die Toten.\n\nIch glaube an den Heiligen Geist, eine heilige christliche Kirche, die Gemeinde der Heiligen, Vergebung der Sünden, Auferstehung des Fleisches und ein ewiges Leben. Amen.",
+  luthVu: "Vater unser, der du bist im Himmel.\nGeheiliget werde dein Name.\nDein Reich komme.\nDein Wille geschehe, wie im Himmel, also auch auf Erden.\nUnser täglich Brot gib uns heute.\nUnd vergib uns unsere Schuld, wie wir vergeben unsern Schuldigern.\nUnd führe uns nicht in Versuchung.\nSondern erlöse uns von dem Übel.\nDenn dein ist das Reich und die Kraft und die Herrlichkeit in Ewigkeit. Amen.",
   segen: "Der Herr segne uns und behüte uns.\nDer Herr lasse sein Angesicht leuchten über uns und sei uns gnädig.\nDer Herr erhebe sein Angesicht auf uns und gebe uns Frieden. Amen.\n\n(4. Mose 6,24–26)",
   stille: "Halte einen Moment der Stille.\nBringe vor Gott, was dich heute bewegt: Menschen, Sorgen, Dank.",
 };
@@ -71,34 +73,29 @@ const TEXTE = {
     ],
   },
 
-  // ---------- REFORMATORISCH (Luther/Reformierte Tagzeiten) ----------
+  // ---------- REFORMATORISCH (Martin Luther, Kleiner Katechismus: Haussegen, Benedicite, Gratias; gemeinfrei) ----------
   reformatorisch: {
     morgen: [
-      ["Kreuzzeichen", "Das walte Gott Vater, Sohn und Heiliger Geist. Amen."],
-      ["Psalm", P.ps5],
-      ["Glaubensbekenntnis", P.apostolikum],
-      ["Vaterunser", P.vuR],
-      ["Morgensegen (Luther)", "Ich danke dir, mein himmlischer Vater, durch Jesum Christum, deinen lieben Sohn, dass du mich diese Nacht vor allem Schaden und Gefahr behütet hast, und bitte dich, du wollest mich diesen Tag auch behüten vor Sünden und allem Übel, dass dir all mein Tun und Leben gefalle. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen."],
+      ["Kreuzzeichen", "Des Morgens, so du aus dem Bett fährst, sollst du dich segnen mit dem heiligen Kreuz und sagen:\n\nDas walte Gott Vater, Sohn und Heiliger Geist. Amen."],
+      ["Glaube", P.luthCredo],
+      ["Vaterunser", P.luthVu],
+      ["Morgensegen", "Ich danke dir, mein himmlischer Vater, durch Jesum Christum, deinen lieben Sohn, dass du mich diese Nacht vor allem Schaden und Gefahr behütet hast, und bitte dich, du wollest mich diesen Tag auch behüten vor Sünden und allem Übel, dass dir all mein Tun und Leben gefalle. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände; dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen.\n\nUnd alsdann mit Freuden an dein Werk gegangen und etwa ein Lied gesungen oder die zehn Gebote oder was deine Andacht gibt."],
     ],
     mittag: [
-      ["Eröffnung", P.kreuz],
-      ["Psalm", P.ps55 + "\n\n" + P.ps119],
-      ["Gebet", "Herr, Gott, himmlischer Vater, in der Mitte des Tages halte ich inne. Danke für Kraft und Bewahrung bis hierher. Gib mir Weisheit und Geduld für den Rest des Tages. Durch Jesus Christus, unseren Herrn. Amen."],
-      ["Vaterunser", P.vuR],
+      ["Das Benedicite (Tischgebet)", "Mit gefalteten Händen und zuchtvoll vor den Tisch treten und sprechen:\n\nAller Augen warten auf dich, Herr, und du gibst ihnen ihre Speise zu seiner Zeit. Du tust deine milde Hand auf und sättigst alles, was lebt, mit Wohlgefallen."],
+      ["Vaterunser", P.luthVu],
+      ["Gebet um den Segen", "Herr Gott, himmlischer Vater, segne uns und diese deine Gaben, die wir von deiner milden Güte zu uns nehmen, durch Jesum Christum, unsern Herrn. Amen."],
     ],
     abend: [
-      ["Kreuzzeichen", "Das walte Gott Vater, Sohn und Heiliger Geist. Amen."],
-      ["Psalm", P.ps141],
-      ["Glaubensbekenntnis", P.apostolikum],
-      ["Vaterunser", P.vuR],
-      ["Abendsegen (Luther)", "Ich danke dir, mein himmlischer Vater, durch Jesum Christum, deinen lieben Sohn, dass du mich diesen Tag gnädiglich behütet hast, und bitte dich, du wollest mir vergeben alle meine Sünde, wo ich Unrecht getan habe, und mich diese Nacht auch gnädiglich behüten. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen."],
+      ["Das Gratias (Dank nach dem Essen)", "Danket dem Herrn, denn er ist freundlich, und seine Güte währet ewiglich. Der allem Fleische Speise gibt, der dem Vieh sein Futter gibt, den jungen Raben, die ihn anrufen. Er hat nicht Lust an der Stärke des Rosses noch Gefallen an jemandes Beinen. Der Herr hat Gefallen an denen, die ihn fürchten und die auf seine Güte warten."],
+      ["Vaterunser", P.luthVu],
+      ["Dankgebet", "Wir danken dir, Herr Gott, himmlischer Vater, durch Jesum Christum, unsern Herrn, für alle deine Wohltat, der du lebest und regierest in Ewigkeit. Amen."],
     ],
     nacht: [
-      ["Eröffnung", P.kreuz],
-      ["Psalm", P.ps4 + "\n\n" + P.ps121],
-      ["Gebet", "Bleibe bei uns, Herr, denn es will Abend werden und der Tag hat sich geneigt. Bleibe bei uns und bei deiner ganzen Christenheit. Gib uns eine ruhige Nacht und ein neues Erwachen in deinem Frieden. Amen."],
-      ["Vaterunser", P.vuR],
-      ["Segen", P.segen],
+      ["Kreuzzeichen", "Des Abends, wenn du zu Bette gehst, sollst du dich segnen mit dem heiligen Kreuz und sagen:\n\nDas walte Gott Vater, Sohn und Heiliger Geist. Amen."],
+      ["Glaube", P.luthCredo],
+      ["Vaterunser", P.luthVu],
+      ["Abendsegen", "Ich danke dir, mein himmlischer Vater, durch Jesum Christum, deinen lieben Sohn, dass du mich diesen Tag gnädiglich behütet hast, und bitte dich, du wollest mir vergeben alle meine Sünden, wo ich Unrecht getan habe, und mich diese Nacht auch gnädiglich behüten. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen.\n\nUnd alsdann flugs und fröhlich geschlafen."],
     ],
   },
 

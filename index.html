@@ -233,7 +233,7 @@ function getSteps(t,z){
   // Optionale Gebete (Maria/Heilige) am Schluss; „Amen" erst nach dem letzten
   return main.concat(opt);
 }
-function isVerified(t){return !!imported()[t]||(t==='katholisch'&&!!kathCache());}
+function isVerified(t){return t==='reformatorisch'||!!imported()[t]||(t==='katholisch'&&!!kathCache());}
 function impStatus(){const im=imported();const n=Object.keys(im);$('impStatus').textContent=n.length?'Importiert für: '+n.map(k=>TRADITIONEN[k]||k).join(', '):'Keine privaten Texte importiert.';}
 $('impFile').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
