@@ -125,6 +125,9 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
   <div class="sheet" onclick="event.stopPropagation()">
     <h2>Heiliger des Tages</h2>
     <div class="note" id="saintDate"></div>
+    <div class="saintlist" id="saintStories"></div>
+    <div id="saintStory"></div>
+    <div class="note" id="saintMore" style="display:none">Weitere Heilige dieses Tages:</div>
     <div class="saintlist" id="saintList">Lade …</div>
     <div class="saintinfo" id="saintInfo"></div>
     <button class="ghost" style="width:100%" id="saintClose">Schliessen</button>
@@ -139,6 +142,10 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 </div>
 
 <script src="texte.js"></script>
+<script src="geschichten1.js"></script>
+<script src="geschichten2.js"></script>
+<script src="geschichten3.js"></script>
+<script src="geschichten4.js"></script>
 <script>
 const KEY='gebetsapp-v1';
 const defaults={zeiten:Object.fromEntries(Object.entries(ZEITEN).map(([k,v])=>[k,v.def])),std:'griechisch',pro:{}};
@@ -202,7 +209,7 @@ function ritus(){return RITEN[RITUS_TAG[new Date().getDay()]];}
 function extrasHTML(){
   const v=VERSE[(new Date().getDate()-1)%VERSE.length];
   return `<div class="card"><div class="label">Vers des Tages</div><p class="verse">„${v[0]}“<small>${v[1]} · Lutherbibel 1912</small></p></div>
-  <button class="start" id="saintBtn">Heiliger des Tages</button>`;
+  <button class="start" id="saintBtn">Heiliger des Tages${(()=>{const t=tradOf(currentZeit());const g=geschichtenFuer(t,saintDate(t));return g.length?' · '+g.map(x=>x.n).join(', '):'';})()}</button>`;
 }
 
 // Heilige des Tages (Wikipedia, online)
@@ -212,13 +219,35 @@ async function wiki(params){
   const r=await fetch('https://de.wikipedia.org/w/api.php?format=json&origin=*&'+params);
   return r.json();
 }
+// Erzählte Heiligengeschichten (geschichten*.js): nach Datum und Tradition
+const TRAD_KURZ={katholisch:'k',reformatorisch:'r',griechisch:'g',orientalisch:'o'};
+const ostkirche=t=>t==='griechisch'||t==='orientalisch';
+function saintDate(t){const d=new Date();if(S.julian&&ostkirche(t))d.setDate(d.getDate()-13);return d;}
+function geschichtenFuer(t,d){
+  const tag=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return GESCHICHTEN.filter(g=>g.t.includes(TRAD_KURZ[t])&&(ostkirche(t)?g.dO:g.d)===tag);
+}
+function showStory(g){
+  const abs=g.text.split('\n\n').map(p=>`<p class="saintinfo">${esc(p)}</p>`).join('');
+  $('saintStory').innerHTML=`<h3 style="font-weight:400;font-size:22px;margin:16px 0 2px">${esc(g.n)}</h3><div class="note" style="margin-top:0">${esc(g.titel)}</div>${abs}`
+    +`<div class="note"><b>Zum Nachdenken:</b> ${esc(g.frage)}</div>`
+    +`<div class="note">Frei erzählt nach: ${esc(g.q)}. Legenden sind im Text als solche genannt. Für genaue Angaben bitte die Quellen oder das Ökumenische Heiligenlexikon heranziehen.</div>`;
+}
+function showStories(t,d){
+  const gs=geschichtenFuer(t,d);window._gs=gs;
+  $('saintStory').innerHTML='';
+  $('saintStories').innerHTML=gs.length>1?gs.map((g,i)=>`<button data-story="${i}">${esc(g.n)}<small>${esc(g.titel)}</small></button>`).join(''):'';
+  document.querySelectorAll('#saintStories [data-story]').forEach(b=>b.onclick=()=>{showStory(gs[+b.dataset.story]);$('saintStory').scrollIntoView({behavior:'smooth',block:'start'});});
+  if(gs.length===1)showStory(gs[0]);
+  $('saintMore').style.display=gs.length?'block':'none';
+}
 async function openSaint(){
   $('saintBg').classList.add('open');$('saintInfo').innerHTML='';$('saintList').textContent='Lade …';
   const t=tradOf(currentZeit());
-  const d=new Date();
-  if(S.julian&&(t==='griechisch'||t==='orientalisch'))d.setDate(d.getDate()-13);
+  const d=saintDate(t);
   const title=`${d.getDate()}._${MONATE[d.getMonth()]}`;
   $('saintDate').textContent=`${d.getDate()}. ${MONATE[d.getMonth()]} · ${TRADITIONEN[t]}${S.julian&&(t==='griechisch'||t==='orientalisch')?' (julianisch)':''}`;
+  showStories(t,d);
   if(S.kathUrl){try{await openSaintHL(t,d,S.julian&&(t==='griechisch'||t==='orientalisch'));return;}catch(e){console.warn('Heiligenlexikon nicht erreichbar, nutze Wikipedia',e);}}
   try{
     const j=await wiki('action=query&prop=extracts&explaintext=1&titles='+encodeURIComponent(title));
