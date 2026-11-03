@@ -74,12 +74,11 @@ const TEXTE = {
   // ---------- REFORMATORISCH (Luther/Reformierte Tagzeiten) ----------
   reformatorisch: {
     morgen: [
-      ["Eröffnung", P.kreuz],
-      ["Morgensegen (Luther)", "Ich danke dir, mein himmlischer Vater, durch Jesus Christus, deinen lieben Sohn, dass du mich diese Nacht vor allem Schaden und Gefahr behütet hast, und bitte dich, du wollest mich diesen Tag auch behüten vor Sünden und allem Übel, dass dir all mein Tun und Leben gefalle. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen."],
+      ["Kreuzzeichen", "Das walte Gott Vater, Sohn und Heiliger Geist. Amen."],
       ["Psalm", P.ps5],
       ["Glaubensbekenntnis", P.apostolikum],
       ["Vaterunser", P.vuR],
-      ["Segen", P.segen],
+      ["Morgensegen (Luther)", "Ich danke dir, mein himmlischer Vater, durch Jesum Christum, deinen lieben Sohn, dass du mich diese Nacht vor allem Schaden und Gefahr behütet hast, und bitte dich, du wollest mich diesen Tag auch behüten vor Sünden und allem Übel, dass dir all mein Tun und Leben gefalle. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen."],
     ],
     mittag: [
       ["Eröffnung", P.kreuz],
@@ -88,11 +87,11 @@ const TEXTE = {
       ["Vaterunser", P.vuR],
     ],
     abend: [
-      ["Eröffnung", P.kreuz],
+      ["Kreuzzeichen", "Das walte Gott Vater, Sohn und Heiliger Geist. Amen."],
       ["Psalm", P.ps141],
-      ["Abendsegen (Luther)", "Ich danke dir, mein himmlischer Vater, durch Jesus Christus, deinen lieben Sohn, dass du mich diesen Tag gnädiglich behütet hast, und bitte dich, du wollest mir vergeben alle meine Sünde, wo ich Unrecht getan habe, und mich diese Nacht gnädiglich behüten. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen."],
+      ["Glaubensbekenntnis", P.apostolikum],
       ["Vaterunser", P.vuR],
-      ["Segen", P.segen],
+      ["Abendsegen (Luther)", "Ich danke dir, mein himmlischer Vater, durch Jesum Christum, deinen lieben Sohn, dass du mich diesen Tag gnädiglich behütet hast, und bitte dich, du wollest mir vergeben alle meine Sünde, wo ich Unrecht getan habe, und mich diese Nacht auch gnädiglich behüten. Denn ich befehle mich, meinen Leib und Seele und alles in deine Hände. Dein heiliger Engel sei mit mir, dass der böse Feind keine Macht an mir finde. Amen."],
     ],
     nacht: [
       ["Eröffnung", P.kreuz],
