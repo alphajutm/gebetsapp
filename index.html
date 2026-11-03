@@ -264,26 +264,34 @@ async function loadKath(){
   }catch(e){console.warn('Stundenbuch nicht geladen',e);}
 }
 // Kurz = von Hand gewählte Kernstücke (ca. 10 Minuten), Voll = ungekürzte Fassung. Standard: Nachtgebet voll, sonst kurz.
-// Ausgewählt wird nach Titel-Anfang, in der Reihenfolge der Quelle, jeder Titel nur einmal. Passt die Quelle nicht, bleibt der Text ungekürzt.
+// Ausgewählt wird nach Titel-Anfang, in der Reihenfolge der Quelle, jeder Titel nur einmal; Psalmen rotieren (einer pro Gebet). Passt die Quelle nicht, bleibt der Text ungekürzt.
 const modeOf=z=>(S.modus&&S.modus[z])||(z==='nacht'?'voll':'kurz');
 const words=s=>s[1].split(/\s+/).length;
+const ps=(...n)=>n.map(x=>'Psalm '+x);
 const KURZ={
   griechisch:{
-    morgen:['Eröffnungsgebete','Psalm 5','Jetzt','Kondakion des Wochentages','Das Gebet des heiligen Ephräm','Gebet der Ersten Stunde','Entlassung'],
-    mittag:['Eröffnungsgebete','Psalm 53','Psalm 90','Jetzt','Das Gebet des heiligen Ephräm','Gebet des heiligen Basilius','Entlassung'],
-    abend:['Einleitungsgebete','Psalm 140','Freundliches Licht','Abendgebet','Loblied des Simeon','Entlassung'],
+    morgen:['Eröffnungsgebete',ps(5,89,100),'Jetzt','Kondakion des Wochentages','Das Gebet des heiligen Ephräm','Gebet der Ersten Stunde','Entlassung'],
+    mittag:['Eröffnungsgebete',ps(53,54,90),'Jetzt','Das Gebet des heiligen Ephräm','Gebet des heiligen Basilius','Entlassung'],
+    abend:['Einleitungsgebete',ps(140,141,129,116),'Freundliches Licht','Abendgebet','Loblied des Simeon','Entlassung'],
     nacht:['Eröffnungsgebete','Psalm 50','Glaubensbekenntnis','Das Gebet der Reue','Gebet für jede Stunde','Ein Abendgebet']
   },
   orientalisch:{
-    morgen:['Das Gebet des Herrn','Einleitung der Stunde','Psalm 62','Das Evangelium','Kyrie eleison','Sündennachlass','Bittgebet'],
-    mittag:['Das Gebet des Herrn','Einleitung der Stunde','Psalm 90','Das Evangelium','Kyrie eleison','Sündennachlass','Bittgebet'],
-    abend:['Das Gebet des Herrn','Einleitung der Stunde','Psalm 116','Psalm 119','Psalm 120','Das Evangelium','Troparion 1','Kyrie eleison','Sündennachlass','Bittgebet'],
-    nacht:['Das Gebet des Herrn','Einleitung der Stunde','Psalm 129','Psalm 140','Das Evangelium','Kyrie eleison','Sündennachlass','Bittgebet']
+    morgen:['Das Gebet des Herrn','Einleitung der Stunde',ps(1,2,3,4,5,6,8,11,12,14,15,18,26,62,66,69,112,142),'Das Evangelium','Kyrie eleison','Sündennachlass','Bittgebet'],
+    mittag:['Das Gebet des Herrn','Einleitung der Stunde',ps(53,56,60,62,66,69,83,84,85,86,90,92),'Das Evangelium','Kyrie eleison','Sündennachlass','Bittgebet'],
+    abend:['Das Gebet des Herrn','Einleitung der Stunde',ps(116,119,120,121,122,123,124,125,126,127,128),'Das Evangelium','Troparion 1','Kyrie eleison','Sündennachlass','Bittgebet'],
+    nacht:['Das Gebet des Herrn','Einleitung der Stunde',ps(129,130,131,132,133,136,137,140,141,145,146,147),'Das Evangelium','Kyrie eleison','Sündennachlass','Bittgebet']
   }
 };
 const titelPasst=(t,p)=>t.startsWith(p)&&!/\d/.test(t.charAt(p.length));
+const tagDesJahres=()=>Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/864e5);
+// Höchstens ein Psalm: aus der Gruppe wird je nach Tag des Jahres einer gewählt (rotierend)
 function kuerzen(steps,t,z){
-  const sel=KURZ[t]&&KURZ[t][z];if(!sel)return steps;
+  const sel0=KURZ[t]&&KURZ[t][z];if(!sel0)return steps;
+  const sel=sel0.map(x=>{
+    if(!Array.isArray(x))return x;
+    const da=x.filter(p=>steps.some(s=>titelPasst(s[0],p)));
+    return da.length?da[tagDesJahres()%da.length]:x[0];
+  });
   const seen=new Set();
   const out=steps.filter(s=>{const p=sel.find(x=>titelPasst(s[0],x));if(!p||seen.has(p))return false;seen.add(p);return true;});
   return out.length>=Math.ceil(sel.length*0.6)?out:steps;
