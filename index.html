@@ -67,7 +67,7 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 .saintlist button{display:block;width:100%;text-align:left;font:16px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
 .saintlist small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .iconcard{padding:0;overflow:hidden;text-align:center}
-.iconcard img{display:block;width:100%;max-height:420px;object-fit:cover;object-position:50% 18%}
+.iconcard img{display:block;width:100%;max-height:420px;object-fit:cover;object-position:50% 14%}
 .iconcard .cap{padding:16px 18px 20px}
 .iconcard .cap small{display:block;font:11px var(--ui);color:var(--muted);margin-top:10px}
 .cross-m{color:var(--gold);font-weight:700;font-size:1.1em}
@@ -186,7 +186,7 @@ function nextZeit(){
 }
 function iconCardHTML(){
   const z=nextZeit();
-  return `<div class="card iconcard"><img src="icons/christus.jpg" alt="Christus Pantokrator, Ikone aus dem Katharinenkloster, Sinai"><div class="cap"><div class="label">Nächstes Gebet</div><div class="name">${ZEITEN[z].name} · ${S.zeiten[z]}</div><small>Christus Pantokrator, Sinai, 6. Jahrhundert (gemeinfrei)</small></div></div>`;
+  return `<div class="card iconcard"><img src="icons/christus.jpg" alt="Christus, der Gute Hirte, Ikone"><div class="cap"><div class="label">Nächstes Gebet</div><div class="name">${ZEITEN[z].name} · ${S.zeiten[z]}</div><small>Christus, der Gute Hirte</small></div></div>`;
 }
 function cardHTML(z,main){
   const t=tradOf(z);
