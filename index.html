@@ -66,6 +66,8 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 .verse small{display:block;font:13px var(--ui);font-style:normal;color:var(--muted);margin-top:8px}
 .saintlist button{display:block;width:100%;text-align:left;font:16px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
 .saintlist small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.cross-m{color:var(--gold);font-weight:700;font-size:1.1em}
+.legend{font:12px var(--ui);color:var(--muted);margin-top:18px}
 .saintinfo{font-size:17px;line-height:1.55;margin:10px 0}
 .saintinfo a{color:var(--gold)}
 </style>
@@ -258,9 +260,24 @@ function openLiturgy(z){
   document.body.dataset.zeit=z;
   $('liturgy').classList.add('open');showStep();
 }
+function esc(x){return x.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Kreuzzeichen markieren: "†" aus den Quellen (byzantinisch) und übliche Stellen
+function crossify(txt,title,trad){
+  let x=esc(txt);
+  x=x.replace(/†/g,'✠');
+  const mark=(re)=>{x=x.replace(re,(m,off,str)=>str.slice(Math.max(0,off-2),off)==='✠ '?m:'✠ '+m);};
+  mark(/Im Namen des Vaters und des Sohnes und des Heiligen Geistes|Das walte Gott Vater, Sohn und Heiliger Geist/g);
+  if(trad==='katholisch'){
+    mark(/O Gott, komm mir zu Hilfe\.|Herr, öffne meine Lippen\.|Der Herr segne uns|Der allmächtige Herr gebe|Eine ruhige Nacht und ein gutes Ende/g);
+    if(/^(Benedictus|Magnificat|Nunc dimittis)/i.test(title))x='✠ '+x;
+  }
+  return x.replace(/✠/g,'<span class="cross-m">✠</span>');
+}
 function showStep(){
   const s=L.steps[L.i];
-  $('lBody').innerHTML=(s[2]?'<div class="note">Optional · Anrufung von Maria / Heiligen</div>':'')+`<h2>${s[0]}</h2>`+s[1].split('\n\n').map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  const body=s[1].split('\n\n').map(p=>`<p>${crossify(p,s[0],tradOf(L.z)).replace(/\n/g,'<br>')}</p>`).join('');
+  const hasCross=body.includes('cross-m');
+  $('lBody').innerHTML=(s[2]?'<div class="note">Optional · Anrufung von Maria / Heiligen</div>':'')+`<h2>${s[0]}</h2>`+body+(hasCross?'<div class="legend"><span class="cross-m">✠</span> = Kreuzzeichen (in der Quelle markiert bzw. übliche Stelle)</div>':'');
   $('lBody').scrollTop=0;
   $('dots').innerHTML=L.steps.map((_,k)=>`<i class="${k<=L.i?'done':''}"></i>`).join('');
   $('lPrev').style.visibility=L.i?'visible':'hidden';
