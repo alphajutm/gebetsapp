@@ -89,6 +89,8 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
   <div class="sheet" id="sheet" onclick="event.stopPropagation()">
     <h2>Einstellungen</h2>
     <div id="timeInputs"></div>
+    <label style="display:block">Katholisch: Worker-URL<br><input type="url" id="kathUrl" placeholder="https://….workers.dev" style="width:100%;margin-top:6px;font:15px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px"></label>
+    <p class="note">Optional. Lädt das heutige Stundenbuch von katholisch.de automatisch (siehe worker/ im Repo).</p>
     <label>Gebete an Maria / Heilige am Schluss <input type="checkbox" id="anruf"></label>
     <label>Julianischer Kalender (Heilige, orthodox) <input type="checkbox" id="julian"></label>
     <label>Standard-Tradition <select id="stdTrad"></select></label>
@@ -207,13 +209,31 @@ $('saintBg').onclick=()=>$('saintBg').classList.remove('open');
 // Importierte Texte (privat, nur lokal im Browser gespeichert)
 const IMP_KEY='gebetsapp-import-v1';
 function imported(){try{return JSON.parse(localStorage.getItem(IMP_KEY)||'{}');}catch(e){return {};}}
+// Katholisches Stundenbuch: täglich automatisch über den eigenen Cloudflare Worker
+const KATH_KEY='gebetsapp-kath-v1';
+const KATH_HORA={morgen:'laudes',mittag:'sexta',abend:'vespers',nacht:'completorium'};
+const today=()=>new Date().toISOString().slice(0,10);
+function kathCache(){try{const c=JSON.parse(localStorage.getItem(KATH_KEY)||'null');return c&&c.date===today()?c.texte:null;}catch(e){return null;}}
+async function loadKath(){
+  if(!S.kathUrl||kathCache())return;
+  try{
+    const texte={};
+    for(const [z,hr] of Object.entries(KATH_HORA)){
+      const r=await fetch(S.kathUrl.replace(/\/$/,'')+'/?hora='+hr);const j=await r.json();
+      if(!j.steps)throw new Error(j.error||'Fehler');
+      texte[z]=j.steps.map(s=>/Marianisch|Gegrüßet|Salve|Regina/i.test(s[0])?[s[0],s[1],1]:s);
+    }
+    localStorage.setItem(KATH_KEY,JSON.stringify({date:today(),texte}));render();
+  }catch(e){console.warn('Stundenbuch nicht geladen',e);}
+}
 function getSteps(t,z){
-  const im=imported();const all=((im[t]&&im[t][z])||TEXTE[t][z]).map(s=>s.slice());
+  const im=imported();const kc=t==='katholisch'?kathCache():null;
+  const all=((kc&&kc[z])||(im[t]&&im[t][z])||TEXTE[t][z]).map(s=>s.slice());
   const main=all.filter(s=>!s[2]);const opt=S.anruf===false?[]:all.filter(s=>s[2]);
   // Optionale Gebete (Maria/Heilige) am Schluss; „Amen" erst nach dem letzten
   return main.concat(opt);
 }
-function isVerified(t){return !!imported()[t];}
+function isVerified(t){return !!imported()[t]||(t==='katholisch'&&!!kathCache());}
 function impStatus(){const im=imported();const n=Object.keys(im);$('impStatus').textContent=n.length?'Importiert für: '+n.map(k=>TRADITIONEN[k]||k).join(', '):'Keine privaten Texte importiert.';}
 $('impFile').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
@@ -256,9 +276,10 @@ function openSettings(){
   $('timeInputs').innerHTML=Object.entries(ZEITEN).map(([k,v])=>`<label>${v.name}<input type="time" data-time="${k}" value="${S.zeiten[k]}"></label>`).join('');
   document.querySelectorAll('[data-time]').forEach(i=>i.onchange=()=>{if(i.value){S.zeiten[i.dataset.time]=i.value;save();render();}});
   $('stdTrad').innerHTML=Object.entries(TRADITIONEN).map(([k,v])=>`<option value="${k}" ${k===S.std?'selected':''}>${v}</option>`).join('');
-  $('julian').checked=!!S.julian;$('anruf').checked=S.anruf!==false;impStatus();
+  $('kathUrl').value=S.kathUrl||'';$('julian').checked=!!S.julian;$('anruf').checked=S.anruf!==false;impStatus();
   $('sheetBg').classList.add('open');
 }
+$('kathUrl').onchange=e=>{S.kathUrl=e.target.value.trim();save();localStorage.removeItem(KATH_KEY);loadKath();};
 $('anruf').onchange=e=>{S.anruf=e.target.checked;save();};
 $('julian').onchange=e=>{S.julian=e.target.checked;save();};
 $('openSettings').onclick=openSettings;
@@ -280,7 +301,7 @@ $('icsBtn').onclick=()=>{
   document.body.appendChild(a);a.click();a.remove();
 };
 
-render();
+render();loadKath();
 setInterval(()=>{if(!$('liturgy').classList.contains('open'))render();},60000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
