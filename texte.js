@@ -50,7 +50,7 @@ const TEXTE = {
     mittag: [
       ["Eröffnung", P.hilfe + "\n\n" + P.ehre],
       ["Psalm (Sext)", P.ps119],
-      ["Angelus", "Der Engel des Herrn brachte Maria die Botschaft, und sie empfing vom Heiligen Geist.\n\nGegrüßet seist du, Maria, voll der Gnade, der Herr ist mit dir. Du bist gebenedeit unter den Frauen, und gebenedeit ist die Frucht deines Leibes, Jesus.\nHeilige Maria, Mutter Gottes, bitte für uns Sünder jetzt und in der Stunde unseres Todes. Amen."],
+      ["Angelus", "Der Engel des Herrn brachte Maria die Botschaft, und sie empfing vom Heiligen Geist.\n\nGegrüßet seist du, Maria, voll der Gnade, der Herr ist mit dir. Du bist gebenedeit unter den Frauen, und gebenedeit ist die Frucht deines Leibes, Jesus.\nHeilige Maria, Mutter Gottes, bitte für uns Sünder jetzt und in der Stunde unseres Todes. Amen.", 1],
       ["Vaterunser", P.vuK],
       ["Schlussgebet", "Herr, Jesus Christus, in der Mitte des Tages bitten wir dich: Gib uns Kraft für das, was noch vor uns liegt, und lass uns dein Licht nicht aus den Augen verlieren. Amen."],
     ],

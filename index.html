@@ -89,6 +89,7 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
   <div class="sheet" id="sheet" onclick="event.stopPropagation()">
     <h2>Einstellungen</h2>
     <div id="timeInputs"></div>
+    <label>Gebete an Maria / Heilige am Schluss <input type="checkbox" id="anruf"></label>
     <label>Julianischer Kalender (Heilige, orthodox) <input type="checkbox" id="julian"></label>
     <label>Standard-Tradition <select id="stdTrad"></select></label>
     <p class="note">Pro Gebet kannst du die Tradition auf der Startseite einzeln wählen.</p>
@@ -154,7 +155,7 @@ function cardHTML(z,main){
   const t=tradOf(z);
   if(main) return `<div class="card main"><div class="label">Jetzt${t==='orientalisch'?' · '+ritus()[0]:''}</div><div class="name">${ZEITEN[z].name}sgebet</div><div class="time">${S.zeiten[z]}</div>
     <div class="chips">${Object.entries(TRADITIONEN).map(([k,v])=>`<button class="chip ${k===t?'on':''}" data-chip="${z}:${k}">${v}</button>`).join('')}</div>
-    <button class="start" data-start="${z}">Gebet beginnen</button></div>`;
+    ${isVerified(t)?'':'<div class="note">Ungeprüfte Kurzfassung. Eigene Texte importierbar (Einstellungen).</div>'}<button class="start" data-start="${z}">Gebet beginnen</button></div>`;
   return `<div class="card"><div class="row"><div><div class="t">${ZEITEN[z].name} · ${S.zeiten[z]}</div><button class="s" data-pick="${z}" style="background:none;border:0;padding:0;cursor:pointer;color:var(--muted)">${TRADITIONEN[t]} ⟳</button></div><button class="small" data-start="${z}">Beten</button></div></div>`;
 }
 
@@ -206,7 +207,13 @@ $('saintBg').onclick=()=>$('saintBg').classList.remove('open');
 // Importierte Texte (privat, nur lokal im Browser gespeichert)
 const IMP_KEY='gebetsapp-import-v1';
 function imported(){try{return JSON.parse(localStorage.getItem(IMP_KEY)||'{}');}catch(e){return {};}}
-function getSteps(t,z){const im=imported();return ((im[t]&&im[t][z])||TEXTE[t][z]).map(s=>s.slice());}
+function getSteps(t,z){
+  const im=imported();const all=((im[t]&&im[t][z])||TEXTE[t][z]).map(s=>s.slice());
+  const main=all.filter(s=>!s[2]);const opt=S.anruf===false?[]:all.filter(s=>s[2]);
+  // Optionale Gebete (Maria/Heilige) am Schluss; „Amen" erst nach dem letzten
+  return main.concat(opt);
+}
+function isVerified(t){return !!imported()[t];}
 function impStatus(){const im=imported();const n=Object.keys(im);$('impStatus').textContent=n.length?'Importiert für: '+n.map(k=>TRADITIONEN[k]||k).join(', '):'Keine privaten Texte importiert.';}
 $('impFile').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
@@ -227,13 +234,13 @@ let L={z:null,steps:[],i:0};
 function openLiturgy(z){
   L.z=z;L.steps=getSteps(tradOf(z),z);L.i=0;
   if(tradOf(z)==='orientalisch'){const r=ritus();L.steps.unshift([r[0],r[1]+'\n\nHeute wird nach dem Wochentag dieser Ritus hervorgehoben. Die folgenden Gebete sind eine gemeinsame Kurzform.']);}
-  $('lTitle').textContent=`${ZEITEN[z].name} · ${TRADITIONEN[tradOf(z)]}`;
+  $('lTitle').textContent=`${ZEITEN[z].name} · ${TRADITIONEN[tradOf(z)]}${isVerified(tradOf(z))?'':' · ungeprüft'}`;
   document.body.dataset.zeit=z;
   $('liturgy').classList.add('open');showStep();
 }
 function showStep(){
   const s=L.steps[L.i];
-  $('lBody').innerHTML=`<h2>${s[0]}</h2>`+s[1].split('\n\n').map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  $('lBody').innerHTML=(s[2]?'<div class="note">Optional · Anrufung von Maria / Heiligen</div>':'')+`<h2>${s[0]}</h2>`+s[1].split('\n\n').map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
   $('lBody').scrollTop=0;
   $('dots').innerHTML=L.steps.map((_,k)=>`<i class="${k<=L.i?'done':''}"></i>`).join('');
   $('lPrev').style.visibility=L.i?'visible':'hidden';
@@ -249,9 +256,10 @@ function openSettings(){
   $('timeInputs').innerHTML=Object.entries(ZEITEN).map(([k,v])=>`<label>${v.name}<input type="time" data-time="${k}" value="${S.zeiten[k]}"></label>`).join('');
   document.querySelectorAll('[data-time]').forEach(i=>i.onchange=()=>{if(i.value){S.zeiten[i.dataset.time]=i.value;save();render();}});
   $('stdTrad').innerHTML=Object.entries(TRADITIONEN).map(([k,v])=>`<option value="${k}" ${k===S.std?'selected':''}>${v}</option>`).join('');
-  $('julian').checked=!!S.julian;impStatus();
+  $('julian').checked=!!S.julian;$('anruf').checked=S.anruf!==false;impStatus();
   $('sheetBg').classList.add('open');
 }
+$('anruf').onchange=e=>{S.anruf=e.target.checked;save();};
 $('julian').onchange=e=>{S.julian=e.target.checked;save();};
 $('openSettings').onclick=openSettings;
 $('stdTrad').onchange=e=>{S.std=e.target.value;save();render();};
