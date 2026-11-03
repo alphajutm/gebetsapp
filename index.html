@@ -66,6 +66,10 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 .verse small{display:block;font:13px var(--ui);font-style:normal;color:var(--muted);margin-top:8px}
 .saintlist button{display:block;width:100%;text-align:left;font:16px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
 .saintlist small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.iconcard{padding:0;overflow:hidden;text-align:center}
+.iconcard img{display:block;width:100%;max-height:420px;object-fit:cover;object-position:50% 18%}
+.iconcard .cap{padding:16px 18px 20px}
+.iconcard .cap small{display:block;font:11px var(--ui);color:var(--muted);margin-top:10px}
 .cross-m{color:var(--gold);font-weight:700;font-size:1.1em}
 .legend{font:12px var(--ui);color:var(--muted);margin-top:18px}
 .saintinfo{font-size:17px;line-height:1.55;margin:10px 0}
@@ -147,13 +151,29 @@ function render(){
   const cur=currentZeit();
   document.body.dataset.zeit=cur;
   $('greet').textContent={morgen:'Guten Morgen',mittag:'Gesegneten Mittag',abend:'Guten Abend',nacht:'Gute Nacht'}[cur];
-  $('current').innerHTML=cardHTML(cur,true);
-  $('others').innerHTML=Object.keys(ZEITEN).filter(z=>z!==cur).sort((a,b)=>mins(S.zeiten[a])-mins(S.zeiten[b])).map(z=>cardHTML(z,false)).join('');
+  const due=dueZeit();
+  $('current').innerHTML=due?cardHTML(due,true):iconCardHTML();
+  $('others').innerHTML=Object.keys(ZEITEN).filter(z=>z!==due).sort((a,b)=>mins(S.zeiten[a])-mins(S.zeiten[b])).map(z=>cardHTML(z,false)).join('');
   $('extras').innerHTML=extrasHTML();
   $('saintBtn').onclick=openSaint;
   document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>openLiturgy(b.dataset.start));
   document.querySelectorAll('[data-chip]').forEach(b=>b.onclick=()=>{const t=b.dataset.chip.split(':')[1];S.std=t;S.pro={};save();render();});
   document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const z=b.dataset.pick;const l=Object.keys(TRADITIONEN);S.pro[z]=l[(l.indexOf(tradOf(z))+1)%l.length];save();render();});
+}
+// Gebet „fällig“: von 15 Min. vor bis 90 Min. nach der eingestellten Zeit
+function dueZeit(){
+  const now=new Date();const n=now.getHours()*60+now.getMinutes();
+  for(const z of Object.keys(ZEITEN)){const m=mins(S.zeiten[z]);if(n>=m-15&&n<=m+90)return z;}
+  return null;
+}
+function nextZeit(){
+  const now=new Date();const n=now.getHours()*60+now.getMinutes();
+  const order=Object.keys(ZEITEN).sort((a,b)=>mins(S.zeiten[a])-mins(S.zeiten[b]));
+  return order.find(z=>mins(S.zeiten[z])>n)||order[0];
+}
+function iconCardHTML(){
+  const z=nextZeit();
+  return `<div class="card iconcard"><img src="icons/christus.jpg" alt="Christus Pantokrator, Ikone aus dem Katharinenkloster, Sinai"><div class="cap"><div class="label">Nächstes Gebet</div><div class="name">${ZEITEN[z].name} · ${S.zeiten[z]}</div><small>Christus Pantokrator, Sinai, 6. Jahrhundert (gemeinfrei)</small></div></div>`;
 }
 function cardHTML(z,main){
   const t=tradOf(z);
