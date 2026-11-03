@@ -111,8 +111,10 @@ function parseHeilige(html) {
   const body = html.slice(a, b)
     .replace(/<figure[\s\S]*?<\/figure>/g, '').replace(/<div class="nurhandy[\s\S]*?<\/div>/g, '')
     .replace(/<script[\s\S]*?<\/script>/g, '').replace(/<p class="verweis[^>]*>[\s\S]*?<\/p>/g, '');
-  const paragraphs = [...body.matchAll(/<(p|h3|h4)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/g)]
+  let paragraphs = [...body.matchAll(/<(p|h3|h4)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/g)]
     .map((m) => ({ h: m[1] !== 'p', t: textOf(m[2]) })).filter((x) => x.t);
+  const ende = paragraphs.findIndex((x) => x.h && /Leserkommentare|Web 3\.0/.test(x.t));
+  if (ende >= 0) paragraphs = paragraphs.slice(0, ende);
   const imp = (html.match(/<p class="impressum">([\s\S]*?)<\/p>/) || [, ''])[1];
   const autor = textOf((imp.match(/<b>Autor:<\/b>([\s\S]*?)(?:-\s*<i>|<br|$)/) || [, ''])[1]).replace(/\n/g, ' ');
   const stand = (imp.match(/zuletzt aktualisiert am\s*(?:<!--[^>]*-->)?\s*([\d.]+)/) || [, ''])[1];
