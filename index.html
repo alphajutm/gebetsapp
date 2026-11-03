@@ -74,6 +74,13 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 .legend{font:12px var(--ui);color:var(--muted);margin-top:18px}
 .saintinfo{font-size:17px;line-height:1.55;margin:10px 0}
 .saintinfo a{color:var(--gold)}
+.tabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;margin:0 0 18px}
+.tabs button{flex:1;font:600 15px var(--ui);color:var(--muted);background:transparent;border:0;border-radius:999px;padding:11px;cursor:pointer}
+.tabs button.on{background:var(--gold);color:var(--on-gold)}
+.booklist button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;font:17px var(--font);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer}
+.booklist button small{font:12px var(--ui);color:var(--muted);margin-left:10px;white-space:nowrap}
+.booklist h3{font:12px var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+.chips.left{justify-content:flex-start;margin:0 0 14px}
 </style>
 </head>
 <body>
@@ -85,10 +92,14 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
     </div>
     <button class="icon-btn" id="openSettings" aria-label="Einstellungen">⚙︎</button>
   </header>
+  <div class="tabs"><button id="tabHeute" class="on">Gebete</button><button id="tabBuch">Gebetbuch</button></div>
+  <div id="viewHeute">
   <div class="cross">☩</div>
   <section id="current"></section>
   <section id="others"></section>
   <section id="extras"></section>
+  </div>
+  <div id="viewBuch" style="display:none"></div>
 </main>
 
 <div class="sheet-bg" id="sheetBg">
@@ -158,6 +169,8 @@ function render(){
   $('saintBtn').onclick=openSaint;
   document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>openLiturgy(b.dataset.start));
   document.querySelectorAll('[data-chip]').forEach(b=>b.onclick=()=>{const t=b.dataset.chip.split(':')[1];S.std=t;S.pro={};save();render();});
+  document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{const[z,m]=b.dataset.mode.split(':');S.modus=Object.assign({},S.modus,{[z]:m});save();render();});
+  document.querySelectorAll('[data-modus]').forEach(b=>b.onclick=()=>{const z=b.dataset.modus;S.modus=Object.assign({},S.modus,{[z]:modeOf(z)==='kurz'?'voll':'kurz'});save();render();});
   document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const z=b.dataset.pick;const l=Object.keys(TRADITIONEN);S.pro[z]=l[(l.indexOf(tradOf(z))+1)%l.length];save();render();});
 }
 // Gebet „fällig“: von 5 Min. vor bis 30 Min. nach der eingestellten Zeit
@@ -179,8 +192,10 @@ function cardHTML(z,main){
   const t=tradOf(z);
   if(main) return `<div class="card main"><div class="label">Jetzt${t==='orientalisch'?' · '+ritus()[0]:''}</div><div class="name">${ZEITEN[z].name}sgebet</div><div class="time">${S.zeiten[z]}</div>
     <div class="chips">${Object.entries(TRADITIONEN).map(([k,v])=>`<button class="chip ${k===t?'on':''}" data-chip="${z}:${k}">${v}</button>`).join('')}</div>
+    <div class="chips">${['kurz','voll'].map(m=>`<button class="chip ${modeOf(z)===m?'on':''}" data-mode="${z}:${m}">${m==='kurz'?'Kurz':'Voll'}</button>`).join('')}</div>
+    <div class="note">ca. ${minutes(getSteps(t,z))} Min.</div>
     ${isVerified(t)?'':'<div class="note">Ungeprüfte Kurzfassung. Eigene Texte importierbar (Einstellungen).</div>'}<button class="start" data-start="${z}">Gebet beginnen</button></div>`;
-  return `<div class="card"><div class="row"><div><div class="t">${ZEITEN[z].name} · ${S.zeiten[z]}</div><button class="s" data-pick="${z}" style="background:none;border:0;padding:0;cursor:pointer;color:var(--muted)">${TRADITIONEN[t]} ⟳</button></div><button class="small" data-start="${z}">Beten</button></div></div>`;
+  return `<div class="card"><div class="row"><div><div class="t">${ZEITEN[z].name} · ${S.zeiten[z]}</div><button class="s" data-pick="${z}" style="background:none;border:0;padding:0;cursor:pointer;color:var(--muted)">${TRADITIONEN[t]} ⟳</button> <button class="s" data-modus="${z}" style="background:none;border:0;padding:0;cursor:pointer;color:var(--muted)">· ${modeOf(z)==='kurz'?'Kurz':'Voll'} ⟳</button></div><button class="small" data-start="${z}">Beten</button></div></div>`;
 }
 
 function ritus(){return RITEN[RITUS_TAG[new Date().getDay()]];}
@@ -248,10 +263,25 @@ async function loadKath(){
     localStorage.setItem(KATH_KEY,JSON.stringify({date:today(),texte}));render();
   }catch(e){console.warn('Stundenbuch nicht geladen',e);}
 }
+// Kurz = höchstens ca. 10 Minuten Gebet (~1200 Wörter), Voll = ungekürzte Fassung. Standard: Nachtgebet voll, sonst kurz.
+const modeOf=z=>(S.modus&&S.modus[z])||(z==='nacht'?'voll':'kurz');
+const words=s=>s[1].split(/\s+/).length;
+const KURZ_MAX=1200;
+function kuerzen(steps){
+  let keep=steps.map((_,i)=>i);let tot=steps.reduce((a,s)=>a+words(s),0);
+  while(tot>KURZ_MAX){
+    let b=-1;
+    for(const i of keep){if(i===0||i===steps.length-1)continue;if(b<0||words(steps[i])>words(steps[b]))b=i;}
+    if(b<0)break;
+    keep=keep.filter(i=>i!==b);tot-=words(steps[b]);
+  }
+  return keep.map(i=>steps[i]);
+}
+function minutes(steps){return Math.max(1,Math.round(steps.reduce((a,s)=>a+words(s),0)/120));}
 function getSteps(t,z){
   const im=imported();const kc=t==='katholisch'?kathCache():null;
   const all=((kc&&kc[z])||(im[t]&&im[t][z])||TEXTE[t][z]).map(s=>s.slice());
-  const main=all.filter(s=>!s[2]);const opt=S.anruf===false?[]:all.filter(s=>s[2]);
+  let main=all.filter(s=>!s[2]);if(modeOf(z)==='kurz')main=kuerzen(main);const opt=S.anruf===false?[]:all.filter(s=>s[2]);
   // Optionale Gebete (Maria/Heilige) am Schluss; „Amen" erst nach dem letzten
   return main.concat(opt);
 }
@@ -272,9 +302,9 @@ $('impFile').onchange=async e=>{
 $('impClear').onclick=()=>{if(confirm('Importierte Texte löschen?')){localStorage.removeItem(IMP_KEY);impStatus();}};
 
 // Liturgie
-let L={z:null,steps:[],i:0};
+let L={z:null,t:null,book:false,steps:[],i:0};
 function openLiturgy(z){
-  L.z=z;L.steps=getSteps(tradOf(z),z);L.i=0;
+  L.z=z;L.t=tradOf(z);L.book=false;L.steps=getSteps(tradOf(z),z);L.i=0;
   if(tradOf(z)==='orientalisch'){const r=ritus();L.steps.unshift([r[0],r[1]+'\n\nHeute wird nach dem Wochentag dieser Ritus hervorgehoben. Die folgenden Gebete sind eine gemeinsame Kurzform.']);}
   $('lTitle').textContent=`${ZEITEN[z].name} · ${TRADITIONEN[tradOf(z)]}${isVerified(tradOf(z))?'':' · ungeprüft'}`;
   document.body.dataset.zeit=z;
@@ -295,13 +325,13 @@ function crossify(txt,title,trad){
 }
 function showStep(){
   const s=L.steps[L.i];
-  const body=s[1].split('\n\n').map(p=>`<p>${crossify(p,s[0],tradOf(L.z)).replace(/\n/g,'<br>')}</p>`).join('');
+  const body=s[1].split('\n\n').map(p=>`<p>${crossify(p,s[0],L.t).replace(/\n/g,'<br>')}</p>`).join('');
   const hasCross=body.includes('cross-m');
   $('lBody').innerHTML=(s[2]?'<div class="note">Optional · Anrufung von Maria / Heiligen</div>':'')+`<h2>${s[0]}</h2>`+body+(hasCross?'<div class="legend"><span class="cross-m">✠</span> = Kreuzzeichen (in der Quelle markiert bzw. übliche Stelle)</div>':'');
   $('lBody').scrollTop=0;
-  $('dots').innerHTML=L.steps.map((_,k)=>`<i class="${k<=L.i?'done':''}"></i>`).join('');
+  $('dots').innerHTML=L.book?'':L.steps.map((_,k)=>`<i class="${k<=L.i?'done':''}"></i>`).join('');
   $('lPrev').style.visibility=L.i?'visible':'hidden';
-  $('lNext').textContent=L.i===L.steps.length-1?'Amen':'Weiter';
+  $('lNext').textContent=L.i===L.steps.length-1?'Amen':'Weiter';$('lTitle').textContent=L.book?`Gebetbuch · ${TRADITIONEN[L.t]}`:$('lTitle').textContent;
 }
 $('lNext').onclick=()=>{if(L.i<L.steps.length-1){L.i++;showStep();}else closeLiturgy();};
 $('lPrev').onclick=()=>{if(L.i){L.i--;showStep();}};
@@ -311,6 +341,44 @@ let wl=null;
 async function keepAwake(on){try{if(on&&'wakeLock' in navigator)wl=await navigator.wakeLock.request('screen');else if(wl){await wl.release();wl=null;}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('liturgy').classList.contains('open'))keepAwake(true);});
 function closeLiturgy(){$('liturgy').classList.remove('open');keepAwake(false);render();}
+
+// Gebetbuch: alle Gebete der gewählten Tradition (aus den Stundengebeten plus Grundgebete)
+const BOOK_SKIP=/^(Stille und eigene Anliegen|Fürbitten|Eröffnung|Schlussgebet|Segen)$/;
+function bookFor(t){
+  const grund=[['Vaterunser',t==='katholisch'?P.vuK:t==='reformatorisch'?P.vuR:P.vuO],['Ehre sei dem Vater',P.ehre],['Jesusgebet',P.jesus],['Psalm 23',P.ps23],['Psalm 51',P.ps51],['Psalm 91',P.ps91],['Psalm 121',P.ps121],['Segen',P.segen]];
+  if(t==='katholisch')grund.splice(1,0,['Ave Maria','Gegrüßet seist du, Maria, voll der Gnade, der Herr ist mit dir.\nDu bist gebenedeit unter den Frauen, und gebenedeit ist die Frucht deines Leibes, Jesus.\nHeilige Maria, Mutter Gottes, bitte für uns Sünder jetzt und in der Stunde unseres Todes. Amen.'],['Apostolisches Glaubensbekenntnis',P.apostolikum]);
+  else if(t==='reformatorisch')grund.splice(1,0,['Apostolisches Glaubensbekenntnis',P.luthCredo]);
+  else grund.splice(1,0,['Glaubensbekenntnis (Nizäno-Konstantinopolitanum)',P.credo],['Trisagion',P.trisagion],['Himmlischer König',P.himmlKoenig]);
+  const seen=new Set(grund.map(g=>g[0]));
+  const im=imported()[t],kc=t==='katholisch'?kathCache():null;
+  const aus=[];
+  for(const z of Object.keys(ZEITEN)){
+    for(const s of ((kc&&kc[z])||(im&&im[z])||TEXTE[t][z])){
+      if(BOOK_SKIP.test(s[0])||seen.has(s[0]))continue;
+      seen.add(s[0]);aus.push([s[0],s[1],s[2]]);
+    }
+  }
+  return {grund,aus};
+}
+let bookTrad=null;
+function renderBook(){
+  const t=bookTrad||(bookTrad=S.std);const b=bookFor(t);
+  const item=(s,i,off)=>`<button data-book="${off+i}">${s[0]}<small>${minutes([s])<=1?'':'ca. '+minutes([s])+' Min.'}</small></button>`;
+  window._book=b.grund.concat(b.aus);
+  $('viewBuch').innerHTML=`<div class="chips left">${Object.entries(TRADITIONEN).map(([k,v])=>`<button class="chip ${k===t?'on':''}" data-btrad="${k}">${v}</button>`).join('')}</div>
+    <div class="booklist"><h3>Grundgebete</h3>${b.grund.map((s,i)=>item(s,i,0)).join('')}<h3>Aus den Stundengebeten</h3>${b.aus.map((s,i)=>item(s,i,b.grund.length)).join('')}</div>`;
+  document.querySelectorAll('[data-btrad]').forEach(x=>x.onclick=()=>{bookTrad=x.dataset.btrad;renderBook();});
+  document.querySelectorAll('[data-book]').forEach(x=>x.onclick=()=>{
+    L={z:null,t,book:true,steps:window._book.map(s=>s.slice(0,2)),i:+x.dataset.book};
+    $('lTitle').textContent='';$('liturgy').classList.add('open');keepAwake(true);showStep();
+  });
+}
+function showTab(buch){
+  $('viewHeute').style.display=buch?'none':'';$('viewBuch').style.display=buch?'':'none';
+  $('tabHeute').classList.toggle('on',!buch);$('tabBuch').classList.toggle('on',buch);
+  if(buch)renderBook();
+}
+$('tabHeute').onclick=()=>showTab(false);$('tabBuch').onclick=()=>showTab(true);
 
 // Einstellungen
 function openSettings(){
