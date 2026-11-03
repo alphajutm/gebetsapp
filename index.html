@@ -219,6 +219,7 @@ async function openSaint(){
   if(S.julian&&(t==='griechisch'||t==='orientalisch'))d.setDate(d.getDate()-13);
   const title=`${d.getDate()}._${MONATE[d.getMonth()]}`;
   $('saintDate').textContent=`${d.getDate()}. ${MONATE[d.getMonth()]} · ${TRADITIONEN[t]}${S.julian&&(t==='griechisch'||t==='orientalisch')?' (julianisch)':''}`;
+  if(S.kathUrl){try{await openSaintHL(t,d,S.julian&&(t==='griechisch'||t==='orientalisch'));return;}catch(e){console.warn('Heiligenlexikon nicht erreichbar, nutze Wikipedia',e);}}
   try{
     const j=await wiki('action=query&prop=extracts&explaintext=1&titles='+encodeURIComponent(title));
     const txt=Object.values(j.query.pages)[0].extract;
@@ -232,6 +233,49 @@ async function openSaint(){
     document.querySelectorAll('#saintList button').forEach(b=>b.onclick=()=>saintInfo(b.dataset.n));
   }catch(e){$('saintList').textContent='Konnte nicht geladen werden. Bitte Internetverbindung prüfen.';}
 }
+// Heiligenlexikon (Ökumenisches Heiligenlexikon, Joachim Schäfer) über den eigenen Worker
+const HL_FUER={katholisch:['katholisch'],reformatorisch:['evangelisch','anglikanisch'],griechisch:['orthodox'],orientalisch:['koptisch','syrisch','armenisch','aethiopisch']};
+const HL_NAME={katholisch:'Katholisch',evangelisch:'Evangelisch',anglikanisch:'Anglikanisch',orthodox:'Orthodox',koptisch:'Koptisch',syrisch:'Syrisch-orthodox',armenisch:'Armenisch',aethiopisch:'Äthiopisch'};
+async function hlGet(q){
+  const r=await fetch(S.kathUrl.replace(/\/$/,'')+'/?'+q);const j=await r.json();
+  if(!r.ok||j.error)throw new Error(j.error||('Worker '+r.status));
+  return j;
+}
+async function openSaintHL(t,d,verschoben){
+  const tag=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const mitTagesheiliger=!verschoben&&(t==='katholisch'||t==='reformatorisch');
+  const [tagR,tgR]=await Promise.allSettled([hlGet('tag='+tag),mitTagesheiliger?hlGet('tagesheilige=1'):Promise.reject()]);
+  if(tagR.status!=='fulfilled')throw tagR.reason;
+  const items=[];const seen=new Set();
+  for(const sec of HL_FUER[t])for(const e of (tagR.value.sektionen[sec]||[]))for(const l of e.links){if(seen.has(l.url))continue;seen.add(l.url);items.push({name:l.name,url:l.url,sec});}
+  const btn=(x,k)=>`<button data-hl="${k}">${esc(x.name)}<small>${HL_NAME[x.sec]}</small></button>`;
+  const sichtbar=items.slice(0,10),rest=items.slice(10);
+  window._hl=items;window._tg=tgR.status==='fulfilled'?tgR.value:null;
+  $('saintList').innerHTML=(window._tg?`<button data-hl="tg"><b>${esc(window._tg.title)}</b><small>Tagesheiliger des Heiligenlexikons</small></button>`:'')
+    +sichtbar.map((x,k)=>btn(x,k)).join('')
+    +(rest.length?`<div id="hlMore" style="display:none">${rest.map((x,k)=>btn(x,k+10)).join('')}</div><button id="hlMoreBtn" class="ghost" style="text-align:center">Alle ${items.length} Einträge anzeigen</button>`:'')
+    +(items.length?'':'<div class="note">Für diese Tradition ist heute nichts mit Artikel verzeichnet.</div>')
+    +'<div class="note">Quelle: Ökumenisches Heiligenlexikon (heiligenlexikon.de)</div>';
+  $('saintList').querySelectorAll('[data-hl]').forEach(b=>b.onclick=()=>b.dataset.hl==='tg'?showHL(window._tg):hlArtikel(window._hl[+b.dataset.hl]));
+  const mb=$('hlMoreBtn');if(mb)mb.onclick=()=>{$('hlMore').style.display='block';mb.remove();};
+}
+async function hlArtikel(x){
+  $('saintInfo').textContent='Lade …';
+  try{showHL(await hlGet('heilige='+encodeURIComponent(x.url)));}
+  catch(e){$('saintInfo').textContent='Artikel konnte nicht geladen werden.';}
+}
+function showHL(a){
+  const para=a.paragraphs.map(p=>p.h?`<h3 style="font-weight:400;margin:18px 0 6px">${esc(p.t)}</h3>`:`<p>${esc(p.t).replace(/\n/g,'<br>')}</p>`).join('');
+  const heute=new Date();
+  const zit=`Joachim Schäfer: Artikel ${a.title}, aus dem Ökumenischen Heiligenlexikon, ${a.url}, abgerufen am ${heute.getDate()}. ${heute.getMonth()+1}. ${heute.getFullYear()}`;
+  $('saintInfo').innerHTML=`<b style="font-size:20px">${esc(a.title)}</b>`
+    +`<div class="note">${a.meta.map(m=>esc(m).replace(/\n/g,'<br>')).join('<br><br>')}</div>`
+    +para
+    +(a.quellen.length?`<div class="note"><b>Quellen laut Artikel:</b><br>${a.quellen.map(q=>'• '+esc(q)).join('<br>')}</div>`:'')
+    +`<div class="note">Autor: ${esc(a.autor||'Joachim Schäfer')}${a.stand?', Stand '+esc(a.stand):''}<br>${esc(zit)}<br><a href="${esc(a.url)}" target="_blank" rel="noopener">Artikel im Ökumenischen Heiligenlexikon öffnen</a></div>`;
+  $('saintInfo').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 // Geschichte des Heiligen: Lebenskapitel des Wikipedia-Artikels (CC BY-SA 4.0), mit Quellenangabe und Literaturhinweisen des Artikels
 const LEBEN=/^(Leben|Biografie|Biographie|Vita|Lebensgeschichte|Legende|Geschichte|Leben und Wirken|Wirken|Werdegang|Martyrium|Hagiographische)/i;
 function abschnitte(txt){
