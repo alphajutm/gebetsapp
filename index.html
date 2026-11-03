@@ -120,7 +120,7 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
 const KEY='gebetsapp-v1';
 const defaults={zeiten:Object.fromEntries(Object.entries(ZEITEN).map(([k,v])=>[k,v.def])),std:'griechisch',pro:{}};
 let S=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));
-S.zeiten=Object.assign({},defaults.zeiten,S.zeiten);S.pro=S.pro||{};if(!TRADITIONEN[S.std])S.std='griechisch';for(const k in S.pro)if(!TRADITIONEN[S.pro[k]])delete S.pro[k];
+S.zeiten=Object.assign({},defaults.zeiten,S.zeiten);if(['07:00','12:00','18:30','21:30'].join()===['morgen','mittag','abend','nacht'].map(k=>S.zeiten[k]).join())S.zeiten=Object.assign({},defaults.zeiten);S.pro=S.pro||{};if(!TRADITIONEN[S.std])S.std='griechisch';for(const k in S.pro)if(!TRADITIONEN[S.pro[k]])delete S.pro[k];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 const $=id=>document.getElementById(id);
 const tradOf=z=>S.pro[z]||S.std;

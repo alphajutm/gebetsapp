@@ -191,10 +191,10 @@ const TRADITIONEN = {
   reformatorisch: "Reformatorisch",
 };
 const ZEITEN = {
-  morgen: { name: "Morgen", def: "07:00" },
-  mittag: { name: "Mittag", def: "12:00" },
-  abend: { name: "Abend", def: "18:30" },
-  nacht: { name: "Nacht", def: "21:30" },
+  morgen: { name: "Morgen", def: "06:00" },
+  mittag: { name: "Mittag", def: "12:30" },
+  abend: { name: "Abend", def: "19:00" },
+  nacht: { name: "Nacht", def: "22:30" },
 };
 
 // Vers des Tages (Lutherbibel 1912, gemeinfrei): Rotation nach Tag des Monats.
