@@ -278,7 +278,7 @@ function openLiturgy(z){
   if(tradOf(z)==='orientalisch'){const r=ritus();L.steps.unshift([r[0],r[1]+'\n\nHeute wird nach dem Wochentag dieser Ritus hervorgehoben. Die folgenden Gebete sind eine gemeinsame Kurzform.']);}
   $('lTitle').textContent=`${ZEITEN[z].name} · ${TRADITIONEN[tradOf(z)]}${isVerified(tradOf(z))?'':' · ungeprüft'}`;
   document.body.dataset.zeit=z;
-  $('liturgy').classList.add('open');showStep();
+  $('liturgy').classList.add('open');keepAwake(true);showStep();
 }
 function esc(x){return x.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // Kreuzzeichen markieren: "†" aus den Quellen (byzantinisch) und übliche Stellen
@@ -306,7 +306,11 @@ function showStep(){
 $('lNext').onclick=()=>{if(L.i<L.steps.length-1){L.i++;showStep();}else closeLiturgy();};
 $('lPrev').onclick=()=>{if(L.i){L.i--;showStep();}};
 $('lClose').onclick=closeLiturgy;
-function closeLiturgy(){$('liturgy').classList.remove('open');render();}
+// Display während des Gebets nicht abdunkeln
+let wl=null;
+async function keepAwake(on){try{if(on&&'wakeLock' in navigator)wl=await navigator.wakeLock.request('screen');else if(wl){await wl.release();wl=null;}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('liturgy').classList.contains('open'))keepAwake(true);});
+function closeLiturgy(){$('liturgy').classList.remove('open');keepAwake(false);render();}
 
 // Einstellungen
 function openSettings(){
