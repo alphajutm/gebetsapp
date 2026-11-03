@@ -92,6 +92,9 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
     <label>Julianischer Kalender (Heilige, orthodox) <input type="checkbox" id="julian"></label>
     <label>Standard-Tradition <select id="stdTrad"></select></label>
     <p class="note">Pro Gebet kannst du die Tradition auf der Startseite einzeln wählen.</p>
+    <p class="note" id="impStatus"></p>
+    <label style="border:0">Eigene Texte importieren <input type="file" id="impFile" accept=".json,application/json"></label>
+    <button class="ghost" style="width:100%;margin-bottom:12px" id="impClear">Importierte Texte löschen</button>
     <button class="start" id="icsBtn">Erinnerungen im Kalender speichern (.ics)</button>
     <p class="note">Lädt eine Kalenderdatei mit täglichen Alarmen zu deinen Gebetszeiten. Auf dem iPhone öffnen und „Alle hinzufügen“ tippen. Nach einer Änderung der Zeiten erneut exportieren und die alten Einträge im Kalender löschen.</p>
     <button class="ghost" style="width:100%" id="closeSettings">Fertig</button>
@@ -200,10 +203,29 @@ async function saintInfo(name){
 $('saintClose').onclick=()=>$('saintBg').classList.remove('open');
 $('saintBg').onclick=()=>$('saintBg').classList.remove('open');
 
+// Importierte Texte (privat, nur lokal im Browser gespeichert)
+const IMP_KEY='gebetsapp-import-v1';
+function imported(){try{return JSON.parse(localStorage.getItem(IMP_KEY)||'{}');}catch(e){return {};}}
+function getSteps(t,z){const im=imported();return ((im[t]&&im[t][z])||TEXTE[t][z]).map(s=>s.slice());}
+function impStatus(){const im=imported();const n=Object.keys(im);$('impStatus').textContent=n.length?'Importiert für: '+n.map(k=>TRADITIONEN[k]||k).join(', '):'Keine privaten Texte importiert.';}
+$('impFile').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const j=JSON.parse(await f.text());const t=j.texte;
+    if(!t||typeof t!=='object')throw new Error('Format');
+    const cur=imported();
+    for(const k of Object.keys(t)){if(!TRADITIONEN[k])continue;cur[k]=Object.assign(cur[k]||{},t[k]);}
+    localStorage.setItem(IMP_KEY,JSON.stringify(cur));
+    impStatus();alert('Texte importiert.');
+  }catch(err){alert('Datei konnte nicht gelesen werden.');}
+  e.target.value='';
+};
+$('impClear').onclick=()=>{if(confirm('Importierte Texte löschen?')){localStorage.removeItem(IMP_KEY);impStatus();}};
+
 // Liturgie
 let L={z:null,steps:[],i:0};
 function openLiturgy(z){
-  L.z=z;L.steps=TEXTE[tradOf(z)][z].slice();L.i=0;
+  L.z=z;L.steps=getSteps(tradOf(z),z);L.i=0;
   if(tradOf(z)==='orientalisch'){const r=ritus();L.steps.unshift([r[0],r[1]+'\n\nHeute wird nach dem Wochentag dieser Ritus hervorgehoben. Die folgenden Gebete sind eine gemeinsame Kurzform.']);}
   $('lTitle').textContent=`${ZEITEN[z].name} · ${TRADITIONEN[tradOf(z)]}`;
   document.body.dataset.zeit=z;
@@ -227,7 +249,7 @@ function openSettings(){
   $('timeInputs').innerHTML=Object.entries(ZEITEN).map(([k,v])=>`<label>${v.name}<input type="time" data-time="${k}" value="${S.zeiten[k]}"></label>`).join('');
   document.querySelectorAll('[data-time]').forEach(i=>i.onchange=()=>{if(i.value){S.zeiten[i.dataset.time]=i.value;save();render();}});
   $('stdTrad').innerHTML=Object.entries(TRADITIONEN).map(([k,v])=>`<option value="${k}" ${k===S.std?'selected':''}>${v}</option>`).join('');
-  $('julian').checked=!!S.julian;
+  $('julian').checked=!!S.julian;impStatus();
   $('sheetBg').classList.add('open');
 }
 $('julian').onchange=e=>{S.julian=e.target.checked;save();};
