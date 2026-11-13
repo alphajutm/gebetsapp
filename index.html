@@ -107,6 +107,7 @@ h1{font-weight:400;font-size:30px;margin:4px 0 0;line-height:1.15}
     <h2>Einstellungen</h2>
     <div id="timeInputs"></div>
     <label style="display:block">Katholisch: Worker-URL<br><input type="url" id="kathUrl" placeholder="https://….workers.dev" style="width:100%;margin-top:6px;font:15px var(--ui);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px"></label>
+    <p class="note" id="kathStatus"></p>
     <p class="note">Optional. Lädt das heutige Stundenbuch von katholisch.de automatisch (siehe worker/ im Repo).</p>
     <label>Gebete an Maria / Heilige am Schluss <input type="checkbox" id="anruf"></label>
     <label>Julianischer Kalender (Heilige, orthodox) <input type="checkbox" id="julian"></label>
@@ -361,17 +362,23 @@ const KATH_KEY='gebetsapp-kath-v1';
 const KATH_HORA={morgen:'laudes',mittag:'sexta',abend:'vespers',nacht:'completorium'};
 const today=()=>new Date().toISOString().slice(0,10);
 function kathCache(){try{const c=JSON.parse(localStorage.getItem(KATH_KEY)||'null');return c&&c.date===today()?c.texte:null;}catch(e){return null;}}
+let kathMsg='';
+function kathStatus(){const el=$('kathStatus');if(el)el.textContent=!S.kathUrl?'':kathCache()?'✓ Heutiges Stundenbuch geladen.':(kathMsg||'Noch nicht geladen.');}
 async function loadKath(){
-  if(!S.kathUrl||kathCache())return;
-  try{
-    const texte={};
-    for(const [z,hr] of Object.entries(KATH_HORA)){
+  if(!S.kathUrl)return;
+  if(kathCache()){kathStatus();return;}
+  kathMsg='Lade …';kathStatus();
+  const texte={},fehler=[];
+  for(const [z,hr] of Object.entries(KATH_HORA)){
+    try{
       const r=await fetch(S.kathUrl.replace(/\/$/,'')+'/?hora='+hr);const j=await r.json();
       if(!j.steps)throw new Error(j.error||'Fehler');
       texte[z]=j.steps.map(s=>/Marianisch|Gegrüßet|Salve|Regina/i.test(s[0])?[s[0],s[1],1]:s);
-    }
-    localStorage.setItem(KATH_KEY,JSON.stringify({date:today(),texte}));render();
-  }catch(e){console.warn('Stundenbuch nicht geladen',e);}
+    }catch(e){fehler.push(hr+': '+(e.message||e));console.warn('Stundenbuch '+hr+' nicht geladen',e);}
+  }
+  if(Object.keys(texte).length){localStorage.setItem(KATH_KEY,JSON.stringify({date:today(),texte}));kathMsg=fehler.length?'Teilweise geladen. Fehler bei '+fehler.join('; '):'';render();}
+  else kathMsg='Nicht geladen – '+fehler[0]+'. Prüfe die URL (nur https://….workers.dev, ohne Zusatz) und die Adresse, unter der die App geöffnet ist.';
+  kathStatus();
 }
 // Kurz = von Hand gewählte Kernstücke (ca. 10 Minuten), Voll = ungekürzte Fassung. Standard: Nachtgebet voll, sonst kurz.
 // Ausgewählt wird nach Titel-Anfang, in der Reihenfolge der Quelle, jeder Titel nur einmal; Psalmen rotieren (einer pro Gebet). Passt die Quelle nicht, bleibt der Text ungekürzt.
@@ -514,7 +521,7 @@ function openSettings(){
   $('timeInputs').innerHTML=Object.entries(ZEITEN).map(([k,v])=>`<label>${v.name}<input type="time" data-time="${k}" value="${S.zeiten[k]}"></label>`).join('');
   document.querySelectorAll('[data-time]').forEach(i=>i.onchange=()=>{if(i.value){S.zeiten[i.dataset.time]=i.value;save();render();}});
   $('stdTrad').innerHTML=Object.entries(TRADITIONEN).map(([k,v])=>`<option value="${k}" ${k===S.std?'selected':''}>${v}</option>`).join('');
-  $('kathUrl').value=S.kathUrl||'';$('julian').checked=!!S.julian;$('anruf').checked=S.anruf!==false;impStatus();
+  $('kathUrl').value=S.kathUrl||'';$('julian').checked=!!S.julian;$('anruf').checked=S.anruf!==false;impStatus();kathStatus();
   $('sheetBg').classList.add('open');
 }
 $('kathUrl').onchange=e=>{S.kathUrl=e.target.value.trim();save();localStorage.removeItem(KATH_KEY);loadKath();};
